@@ -1,6 +1,85 @@
-  {
-    "type":"object",
-    "definitions":{
+{
+    "type": "object",
+    "definitions": {
+        "debug": {
+            "description": "Set or clear the debug facility for this object",
+            "type": "boolean"
+        },
+        "permissions": {
+            "type":"array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "uri": {
+                        "type":"string"
+                    },
+                    "match": {
+                        "type":"string",
+                        "examples": [
+                            "prefix"
+                        ]
+                    },
+                    "allow": {
+                        "type": "object",
+                        "properties": {
+                            "call": {
+                                "type": "boolean"
+                            },
+                            "register": {
+                                "type":"boolean"
+                            },
+                            "publish":{
+                                "type":"boolean"
+                            },    
+                            "subscribe": {
+                                "type":"boolean"
+                            }
+                        }
+                    },
+                    "disclose":{
+                        "type":"object",
+                        "properties":{
+                            "caller": {
+                                "type":"boolean"
+                            },
+                            "publisher": {
+                                "type":"boolean"
+                            }
+                        }
+                    },
+                    "cache": {
+                        "type":"boolean"
+                    }
+                }
+            }
+        },
+        "object_id": {
+            "type":"object",
+            "properties": {
+                "id": { 
+                    "description": "The id of the relevant object",
+                    "type": "string"
+                }
+            }
+        },
+        "name": {
+            "description": "The name or label of the relevant object",
+            "type":"string"
+        },
+        "protocol_type": {
+            "description": "Must be 'tcp'",
+            "enum": [ "tcp" ]
+        },
+        "tcp_port": {
+            "description": "A TCP Port number (0-65535)",
+            "type": "integer",
+            "examples":[
+                80,
+                8080,
+                443,
+                8443
+            ]
+        },
         "user_list": {
             "description": "",
             "type": "array",
@@ -26,24 +105,99 @@
                 }
             }
         },
-        "tls_endpoint": {
+        "connection_postgres": {
+            "type": "object",
+            "properties": {               
+                "id": { "$ref": "#/definitions/object_id" },
+                "type": { "enum": [ "postgres" ] },
+                "host": {
+                    "description": "",
+                    "type": "string"
+                },
+                "port": { "$ref": "#/definitions/tcp_port" },
+                "database": {
+                    "description": "",
+                    "type": "string"
+                },
+                "user": {
+                    "description": "",
+                    "type": "string"
+                },
+                "password": {
+                    "description": "",
+                    "type": "string"
+                },
+                "options": {
+                    "description": "",
+                    "type": "object",
+                    "properties": {
+                        "min_connections": {
+                            "description": "",
+                            "type": "integer"
+                        },
+                        "max_connections": {
+                            "description": "",
+                            "type": "integer"
+                        }
+                    }
+                }
+            },
+            "required": [
+                "type",
+                "database",
+                "user"
+            ]
+        },
+        "endpoint_tcp": {
             "description": "",
             "type": "object",
             "properties": {
-                "type": {
-                    "description": "Must be 'tcp'",
-                    "type": "string",
-                    "enum": [
-                        "tcp"
-                    ]
-                },
-                "port": {
-                    "description": "TCP Port to listen on",
+                "type": { "$ref": "#/definitions/protocol_type" },
+                "port": { "$ref": "#/definitions/tcp_port" },
+                "version": {
+                    "description": "IP Protocol version, [ipv] 4 or 6",
                     "type": "integer",
+                    "enum": [
+                        4, 6
+                    ],
+                    "default": 4
+                },
+                "interface": {
+                    "description": "Interface / address to listen on",
+                    "type": "string",
                     "examples": [
-                        8080
+                        "127.0.0.1",
+                        "localhost",
+                        "::1"
                     ]
                 },
+                "backlog": {
+                    "description": "Backlog queue length",
+                    "type": "integer",
+                    "default": 50,
+                    "examples": [
+                        50,
+                        100,
+                        250
+                    ]
+                },
+                "shared": {
+                    "description": "Share socket between multiple workers [Linux>3.9]",
+                    "type": "boolean",
+                    "enum": [
+                        true,
+                        false
+                    ],
+                    "default": false
+                }
+            }
+        },
+        "endpoint_tls": {
+            "description": "",
+            "type": "object",
+            "properties": {
+                "type": { "$ref": "#/definitions/protocol_type" },
+                "port": { "$ref": "#/definitions/tcp_port" },
                 "version": {
                     "description": "IP Protocol version, [ipv] 4 or 6",
                     "type": "integer",
@@ -117,412 +271,496 @@
                     }
                 }
             }                
+        },       
+        "endpoint": {
+            "description": "A listening endpoint",
+            "type": "object",
+            "oneOf": [
+                { "$ref": "#/definitions/listening_endpoint_tcp" },
+                { "$ref": "#/definitions/listening_endpoint_unix" },
+                { "$ref": "#/definitions/listening_endpoint_twisted" },
+                { "$ref": "#/definitions/listening_endpoint_onion" }
+            ]
+        },
+        "listening_endpoint_tcp": {
+            "tcp": { "$ref": "#/definitions/endpoint_tcp" }
+        },
+        "listening_endpoint_unix": {
+            "unix": { }
+        },
+        "listening_endpoint_twisted": {
+            "twisted": { }
+        },
+        "listening_endpoint_onion": {
+            "onion": {  }
+        },
+        "roles": {
+            "type":"array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": { "$ref": "#/definitions/name" },
+                    "permissions": { "$ref": "#/definitions/permissions" }
+                }       
+            }
+        },
+        "transport_id": {
+            "description": "",
+            "type":"object",
+            "properties": {
+                "id": { "$ref": "#/definitions/object_id" }
+            }
+        },       
+        "transport_web": {
+            "type": "object",
+            "properties": {
+                "type": { "enum": [ "web" ]}
+            }
+        },
+        "transport_websocket": {
+            "type": "object",
+            "properties": {
+                "type": { "enum": [ "websocket" ]}
+            }
+        },
+        "transport_rawsocket": {
+            "type": "object",
+            "properties": {
+                "type": { "enum": [ "rawsocket" ]}
+            }
+        },
+        "transport_universal": {
+            "type": "object",
+            "properties": {
+                "type": { "enum": [ "universal" ]}
+            },
+            "anyOf": [
+                { "$ref": "#/definitions/transport_id" },
+                { "$ref": "#/definitions/endpoint" },
+                { "$ref": "#/definitions/transport_rawsocket" },
+                { "$ref": "#/definitions/transport_websocket" },
+                { "$ref": "#/definitions/transport_mqtt" },
+                { "$ref": "#/definitions/transport_web" }
+            ]
+        },
+        "transport_mqtt": {
+            "type": "object",
+            "properties": {
+                "type": { "enum": [ "mqtt" ]}
+            }
+        },
+        "transport_flashpolicy": {
+            "type": "object",
+            "properties": {
+                "type": { "enum": [ "flashpolicy" ]}
+            }
+        },
+        "transport_websocket_testee": {
+            "type": "object",
+            "properties": {
+                "type": { "enum": [ "websocket-testee" ]}
+            }
+        },
+        "transport_stream_testee": {
+            "type": "object",
+            "properties": {
+                "type": { "enum": [ "stream-testee" ]}
+            }
+        },       
+        "check_container_component": {
+
+        },
+        "check_container_components": {
+            "type": "array",
+            "items": [
+                { "$ref": "#/definitions/check_container_component" }
+            ]
+        },
+        "check_container_options": {
+            "type": "object",
+            "properties": {
+                "shutdown": {
+                    "enum": [
+                        "shutdown-manual",
+                        "shutdown-on-last-component-stopped"
+                    ]
+                }
+            },
+            "allOf": [
+                { "$ref": "#/definitions/check_native_options" }
+            ]
+        },
+        "check_process_env": {
+            "type": "object",
+            "properties": {
+                "inherit": {
+                    "description": "",
+                    "type": [ "boolean", "array" ]
+                },
+                "env": {
+                    "description": "",
+                    "type": "object"
+                }
+            }
+        },
+        "worker_router": {
+            "type": "object",
+            "properties":{
+                "type": { "enum": [ "router" ] },
+                "realms":{
+                    "type":"array",
+                    "items":{
+                        "type":"object",
+                        "properties":{
+                            "name": { "$ref": "#/definitions/name" },
+                            "roles": { "$ref": "#/definitions/roles" }
+                        }
+                    }
+                },
+                "transports": {
+                    "type":"array",
+                    "items":{
+                        "type":"object",
+                        "oneOf": [
+                            { "$ref": "#/definitions/transport_web" },
+                            { "$ref": "#/definitions/transport_websocket" },
+                            { "$ref": "#/definitions/transport_rawsocket" },
+                            { "$ref": "#/definitions/transport_universal" },
+                            { "$ref": "#/definitions/transport_mqtt" },
+                            { "$ref": "#/definitions/transport_flashpolicy" },
+                            { "$ref": "#/definitions/transport_websocket_testee" },
+                            { "$ref": "#/definitions/transport_stream_testee" }
+                        ]
+                    }
+                }
+            }
+        },
+        "worker_container": {
+            "type": "object",
+            "properties":{
+                "type": { "enum": [ "container" ] }
+            },
+            "anyOf": [
+                { "$ref": "#/definitions/object_id" },
+                { "$ref": "#/definitions/check_manhole" },
+                { "$ref": "#/definitions/check_container_options" },
+                { "$ref": "#/definitions/check_container_components" },
+                { "$ref": "#/definitions/check_connections" }
+            ]
+        },
+        "worker_guest": {
+            "type": "object",
+            "properties":{
+                "type": { "enum": [ "guest" ] },
+                "executable": {
+                    "description": "",
+                    "type": "string"
+                },
+                "arguments": {
+                    "description": "",
+                    "type": "array"
+                },
+                "options": {
+                    "description": "Guest process configuration",
+                    "type": "object",
+                    "properties": {
+                        "env": { "$ref": "#/definitions/check_process_env" },
+                        "workdir": {
+                            "description": "",
+                            "type": "string"
+                        },
+                        "stdin": {
+                            "description": "",
+                            "type": [ "string", "object" ]
+                        },
+                        "stdout": {
+                            "description": "",
+                            "type": "string"
+                        },
+                        "stderr": {
+                            "description": "",
+                            "type": "string"
+                        },
+                        "watch": {
+                            "description": "",
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "required": [
+                "type",
+                "executable"
+            ],
+            "anyOf": [
+                { "$ref": "#/definitions/object_id" }
+            ]
+        },
+        "check_transport_auth_anonymous_static": {
+            "type": "object",
+            "properties":{
+                "type": { "enum": [ "static" ] },
+                "role": {
+                    "description": "",
+                    "type": "string"
+                }
+            }
+        },
+        "check_transport_auth_anonymous_dynamic": {
+            "type": "object",
+            "properties":{
+                "type": { "enum": [ "dynamic" ] },
+                "authenticator": {
+                    "description": "",
+                    "type": "string"
+                }
+            }
+        },
+        "check_transport_auth_anonymous": {
+            "type": "object",
+            "properties":{
+                "auth": { "enum": [ "anonymous" ] }
+            },
+            "oneOf": [
+                { "$ref": "#/definitions/check_transport_auth_anonymous_static" },
+                { "$ref": "#/definitions/check_transport_auth_anonymous_dynamic" }
+            ]
+        },
+        "check_transport_auth_ticket": {
+            "type": "object",
+            "properties":{
+                "auth": { "enum": [ "ticket" ] }
+            }
+        },
+        "check_transport_auth_wampcra": {
+            "type": "object",
+            "properties":{
+                "auth": { "enum": [ "wampcra" ] }
+            }
+        },
+        "check_transport_auth_tls": {
+            "type": "object",
+            "properties":{
+                "auth": { "enum": [ "tls" ] }
+            }
+        },
+        "check_transport_auth_cookie": {
+            "type": "object",
+            "properties":{
+                "auth": { "enum": [ "cookie" ] }
+            }
+        },
+        "check_transport_auth_cryptosign": {
+            "type": "object",
+            "properties":{
+                "auth": { "enum": [ "cryptosign" ] }
+            }
+        },
+        "check_transport_auth_scram": {
+            "type": "object",
+            "properties":{
+                "auth": { "enum": [ "scram" ] }
+            }
+        },
+        "check_transport_auth": {
+            "type": "object",
+            "properties":{
+                "type": { "enum": [ "auth" ] }
+            },
+            "oneOf": [
+                { "$ref": "#/definitions/check_transport_auth_anonymous" },
+                { "$ref": "#/definitions/check_transport_auth_ticket" },
+                { "$ref": "#/definitions/check_transport_auth_wampcra" },
+                { "$ref": "#/definitions/check_transport_auth_tls" },
+                { "$ref": "#/definitions/check_transport_auth_cookie" },
+                { "$ref": "#/definitions/check_transport_auth_cryptosign" },
+                { "$ref": "#/definitions/check_transport_auth_scram" }
+            ]
+        },
+        "check_transport_cookie": {
+            "type": "object",
+            "properties":{
+                "type": { "enum": [ "cookie" ] },
+                "name": {
+                    "description": "",
+                    "type": "string"
+                },
+                "length": {
+                    "description": "",
+                    "type": "integer",
+                    "minimum": 6,
+                    "maximum": 64
+                },
+                "max_age": {
+                    "description": "",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12960000
+                },
+                "store": {
+                    "description": "",
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "description": "",
+                            "enum": [
+                                "memory",
+                                "file"
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "check_listening_transport_websocket": {
+            "type": "object",
+            "properties":{
+                "type": { "enum": [ "websocket", "websocket-testee" ] },
+                "url": {
+                    "description": "", 
+                    "type": "string"
+                },
+                "serializers": {
+                    "description": "",
+                    "type": "array"
+                }
+            },
+            "allOf": [
+                { "$ref": "#/definitions/debug" }
+            ],
+            "anyOf": [
+                { "$ref": "#/definitions/object_id" },
+                { "$ref": "#/definitions/endpoint" },
+                { "$ref": "#/definitions/check_websocket_options" },
+                { "$ref": "#/definitions/check_transport_auth" },
+                { "$ref": "#/definitions/check_transport_cookie" }
+            ]          
+        },
+        "worker_testee": {
+            "type": "object",
+            "properties":{
+                "type": { "enum": [ "websocket-testee" ] }
+            },
+            "anyOf": [
+                { "$ref": "#/definitions/object_id" },
+                { "$ref": "#/definitions/check_native_options" },
+                { "$ref": "#/definitions/check_listening_transport_websocket" }
+            ]
+        },
+        "check_native_options": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "description": "",
+                    "type": "string"
+                },
+                "python": {
+                    "description": "",
+                    "type": "string"
+                },
+                "pythonpath": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "cpu_affinity": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "env": { "$ref": "#/definitions/check_process_env" },
+                "expose_controller": {
+                    "description": "",
+                    "type": "boolean"
+                },
+                "expose_shared": {
+                    "description": "",
+                    "type": "boolean"
+                }
+            }
+        },
+        "controller_options": {
+            "description": "",
+            "type": "object",
+            "properties": {
+                "title": {
+                    "description": "Controller title",
+                    "type": "string"
+                },
+                "shutdown": {
+                    "description": "List of shutdown options",
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "shutdown_on_shutdown_requested",
+                            "shutdown_on_worker_exit",
+                            "shutdown_on_worker_exit_with_error",
+                            "shutdown_on_last_worker_exit"
+                        ]                        
+                    }   
+                }
+            }
+        },
+        "check_manhole": {
+            "description": "",
+            "type": "object",
+            "properties": {               
+                "manhole": {
+                    "description": "",
+                    "type": "object",
+                    "properties": {
+                        "endpoint": { "$ref": "#/definitions/endpoint_tls" },
+                        "users": { "$ref": "#/definitions/user_list" }
+                    },
+                    "required": [
+                        "endpoint", "users"
+                    ]
+                }
+            }
+        },
+        "check_connections": {
+            "description": "",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "oneOf": [
+                    { "$ref": "#/definitions/connection_postgres" }
+                ]
+            }
         }
     },
     "$schema":"http://json-schema.org/draft-07/schema#",
     "properties":{
-      "version":{
-        "type":"integer",
-        "title":"The schema version this file relates to",
-        "default":2,
-        "examples":[
-          2
-        ]
-      },
-      "controller":{
-        "type":"object",
-        "properties": {
-            "id": {
-                "description": "Configuration id, string or regexp",
-                "type": "string"
-            },
-            "options": {
-                "description": "",
+        "version":{
+            "type": "integer",
+            "title": "The schema version this file relates to",
+            "default": 2
+        },
+        "controller": {
+            "description": "Configuration for the node controller",
+            "type":"object",
+            "anyOf": [
+                { "$ref": "#/definitions/object_id" },
+                { "$ref": "#/definitions/controller_options" },
+                { "$ref": "#/definitions/check_manhole" },
+                { "$ref": "#/definitions/check_connections" }
+            ]
+        },
+        "workers": {
+            "description": "Configuration for the workers",
+            "type":"array",
+            "items": {
                 "type": "object",
-                "properties": {
-                    "title": {
-                        "description": "Controller title",
-                        "type": "string"
-                    },
-                    "shutdown": {
-                        "description": "List of shutdown options",
-                        "type": "array",
-                        "items": {
-                            "type": "string",
-                            "enum": [
-                                "shutdown_on_shutdown_requested",
-                                "shutdown_on_worker_exit",
-                                "shutdown_on_worker_exit_with_error",
-                                "shutdown_on_last_worker_exit"
-                            ]
-                        }
-                    }
-                }
-            },
-            "manhole": {
-                "description": "",
-                "type": "object",
-                "properties": {
-                    "endpoint": { "$ref": "#/definitions/tls_endpoint" },
-                    "users": { "$ref": "#/definitions/user_list" }
-                },
-                "required": [
-                    "endpoint", "users"
+                "oneOf": [
+                    { "$ref": "#/definitions/worker_router" },
+                    { "$ref": "#/definitions/worker_container" },
+                    { "$ref": "#/definitions/worker_guest" },
+                    { "$ref": "#/definitions/worker_testee"}                   
                 ]
-            },
-            "connections": {
-
             }
         }
-      },
-      "workers":{
-        "type":"array",
-        "items":{
-          "type":"object",
-          "properties":{
-            "type":{
-              "enum": ["router", "guest", "container"],
-              "title": "The type of this worker",
-              "default":"",
-              "examples":[
-                "router"
-              ]
-            },
-            "realms":{
-              "type":"array",
-              "items":{
-                "type":"object",
-                "properties":{
-                  "name":{
-                    "type":"string",
-                    "title":"The Name Schema ",
-                    "default":"",
-                    "examples":[
-                      "realm1"
-                    ]
-                  },
-                  "roles":{
-                    "type":"array",
-                    "items":{
-                      "type":"object",
-                      "properties":{
-                        "name":{
-                          "type":"string",
-                          "title":"The Name Schema ",
-                          "default":"",
-                          "examples":[
-                            "anonymous"
-                          ]
-                        },
-                        "permissions":{
-                          "type":"array",
-                          "items":{
-                            "type":"object",
-                            "properties":{
-                              "uri":{
-                                "type":"string",
-                                "title":"The Uri Schema ",
-                                "default":"",
-                                "examples":[
-                                  ""
-                                ]
-                              },
-                              "match":{
-                                "type":"string",
-                                "title":"The Match Schema ",
-                                "default":"",
-                                "examples":[
-                                  "prefix"
-                                ]
-                              },
-                              "allow":{
-                                "type":"object",
-                                "properties":{
-                                  "call":{
-                                    "type":"boolean",
-                                    "title":"The Call Schema ",
-                                    "default":false,
-                                    "examples":[
-                                      true
-                                    ]
-                                  },
-                                  "register":{
-                                    "type":"boolean",
-                                    "title":"The Register Schema ",
-                                    "default":false,
-                                    "examples":[
-                                      true
-                                    ]
-                                  },
-                                  "publish":{
-                                    "type":"boolean",
-                                    "title":"The Publish Schema ",
-                                    "default":false,
-                                    "examples":[
-                                      true
-                                    ]
-                                  },
-                                  "subscribe":{
-                                    "type":"boolean",
-                                    "title":"The Subscribe Schema ",
-                                    "default":false,
-                                    "examples":[
-                                      true
-                                    ]
-                                  }
-                                }
-                              },
-                              "disclose":{
-                                "type":"object",
-                                "properties":{
-                                  "caller":{
-                                    "type":"boolean",
-                                    "title":"The Caller Schema ",
-                                    "default":false,
-                                    "examples":[
-                                      true
-                                    ]
-                                  },
-                                  "publisher":{
-                                    "type":"boolean",
-                                    "title":"The Publisher Schema ",
-                                    "default":false,
-                                    "examples":[
-                                      true
-                                    ]
-                                  }
-                                }
-                              },
-                              "cache":{
-                                "type":"boolean",
-                                "title":"The Cache Schema ",
-                                "default":false,
-                                "examples":[
-                                  true
-                                ]
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "transports":{
-              "type":"array",
-              "items":{
-                "type":"object",
-                "properties":{
-                  "type":{
-                    "type":"string",
-                    "title":"The Type Schema ",
-                    "default":"",
-                    "examples":[
-                      "universal"
-                    ]
-                  },
-                  "endpoint":{
-                    "type":"object",
-                    "properties":{
-                      "type":{
-                        "type":"string",
-                        "title":"The Type Schema ",
-                        "default":"",
-                        "examples":[
-                          "tcp"
-                        ]
-                      },
-                      "port":{
-                        "type":"integer",
-                        "title":"The Port Schema ",
-                        "default":0,
-                        "examples":[
-                          8080
-                        ]
-                      }
-                    }
-                  },
-                  "rawsocket":{
-                    "type":"object"
-                  },
-                  "websocket":{
-                    "type":"object",
-                    "properties":{
-                      "ws":{
-                        "type":"object",
-                        "properties":{
-                          "type":{
-                            "type":"string",
-                            "title":"The Type Schema ",
-                            "default":"",
-                            "examples":[
-                              "websocket"
-                            ]
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "web":{
-                    "type":"object",
-                    "properties":{
-                      "paths":{
-                        "type":"object",
-                        "properties":{
-                          "/":{
-                            "type":"object",
-                            "properties":{
-                              "type":{
-                                "type":"string",
-                                "title":"The Type Schema ",
-                                "default":"",
-                                "examples":[
-                                  "static"
-                                ]
-                              },
-                              "directory":{
-                                "type":"string",
-                                "title":"The Directory Schema ",
-                                "default":"",
-                                "examples":[
-                                  "../web"
-                                ]
-                              },
-                              "options":{
-                                "type":"object",
-                                "properties":{
-                                  "enable_directory_listing":{
-                                    "type":"boolean",
-                                    "title":"The Enable_directory_listing Schema ",
-                                    "default":false,
-                                    "examples":[
-                                      true
-                                    ]
-                                  }
-                                }
-                              }
-                            }
-                          },
-                          "info":{
-                            "type":"object",
-                            "properties":{
-                              "type":{
-                                "type":"string",
-                                "title":"The Type Schema ",
-                                "default":"",
-                                "examples":[
-                                  "nodeinfo"
-                                ]
-                              }
-                            }
-                          },
-                          "api":{
-                            "type":"object",
-                            "properties":{
-                              "type":{
-                                "type":"string",
-                                "title":"The Type Schema ",
-                                "default":"",
-                                "examples":[
-                                  "flasky"
-                                ]
-                              },
-                              "uri":{
-                                "type":"string",
-                                "title":"The Uri Schema ",
-                                "default":"",
-                                "examples":[
-                                  "com.myapp.api"
-                                ]
-                              },
-                              "role":{
-                                "type":"string",
-                                "title":"The Role Schema ",
-                                "default":"",
-                                "examples":[
-                                  "anonymous"
-                                ]
-                              },
-                              "realm":{
-                                "type":"string",
-                                "title":"The Realm Schema ",
-                                "default":"",
-                                "examples":[
-                                  "realm1"
-                                ]
-                              },
-                              "templates":{
-                                "type":"array",
-                                "items":{
-                                  "type":"string",
-                                  "title":"The 0th Schema ",
-                                  "default":"",
-                                  "examples":[
-                                    "../templates"
-                                  ]
-                                }
-                              },
-                              "sandbox":{
-                                "type":"boolean",
-                                "title":"The Sandbox Schema ",
-                                "default":false,
-                                "examples":[
-                                  true
-                                ]
-                              },
-                              "routes":{
-                                "type":"array",
-                                "items":{
-                                  "type":"object",
-                                  "properties":{
-                                    "path":{
-                                      "type":"string",
-                                      "title":"The Path Schema ",
-                                      "default":"",
-                                      "examples":[
-                                        "/product/<int:product_id>/report/<report>?<int:year>&<int:month>"
-                                      ]
-                                    },
-                                    "method":{
-                                      "type":"string",
-                                      "title":"The Method Schema ",
-                                      "default":"",
-                                      "examples":[
-                                        "GET"
-                                      ]
-                                    },
-                                    "call":{
-                                      "type":"string",
-                                      "title":"The Call Schema ",
-                                      "default":"",
-                                      "examples":[
-                                        "com.myapp.api"
-                                      ]
-                                    },
-                                    "render":{
-                                      "type":"string",
-                                      "title":"The Render Schema ",
-                                      "default":"",
-                                      "examples":[
-                                        "product_report.j2"
-                                      ]
-                                    }
-                                  }
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
     }
-  }
+}
