@@ -1,0 +1,528 @@
+  {
+    "type":"object",
+    "definitions":{
+        "user_list": {
+            "description": "",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "user": {
+                        "description": "User id",
+                        "type": "string",
+                        "examples": [
+                            "tom",
+                            "dick",
+                            "harry"
+                        ]
+                    },
+                    "password": {
+                        "description": "Password",
+                        "type": "string",
+                        "examples": [
+                            "really1234long5678password"
+                        ]
+                    }
+                }
+            }
+        },
+        "tls_endpoint": {
+            "description": "",
+            "type": "object",
+            "properties": {
+                "type": {
+                    "description": "Must be 'tcp'",
+                    "type": "string",
+                    "enum": [
+                        "tcp"
+                    ]
+                },
+                "port": {
+                    "description": "TCP Port to listen on",
+                    "type": "integer",
+                    "examples": [
+                        8080
+                    ]
+                },
+                "version": {
+                    "description": "IP Protocol version, [ipv] 4 or 6",
+                    "type": "integer",
+                    "enum": [
+                        4, 6
+                    ],
+                    "default": 4
+                },
+                "interface": {
+                    "description": "Interface / address to listen on",
+                    "type": "string",
+                    "examples": [
+                        "127.0.0.1",
+                        "localhost",
+                        "::1"
+                    ]
+                },
+                "backlog": {
+                    "description": "Backlog queue length",
+                    "type": "integer",
+                    "default": 50,
+                    "examples": [
+                        50,
+                        100,
+                        250
+                    ]
+                },
+                "shared": {
+                    "description": "Share socket between multiple workers [Linux>3.9]",
+                    "type": "boolean",
+                    "enum": [
+                        true,
+                        false
+                    ],
+                    "default": false
+                },
+                "tls": {
+                    "description": "Options associated with a TLS endpoint",
+                    "type": "object",
+                    "properties": {       
+                        "key": {
+                            "description": "TLS Key file",
+                            "type": "string"
+                        },
+                        "certificate": {
+                            "description": "TLS Certificate file",
+                            "type": "string"
+                        },
+                        "dhparam": {
+                            "description": "Optional DHParam file",
+                            "type": "string"
+                        },
+                        "ciphers": {
+                            "description": "Valid CIPHERS",
+                            "type": "string"
+                        },                       
+                        "chain_certificates": {
+                            "description": "Certificate chain",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "ca_certificates": {
+                            "description": "CA Certificates",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }                
+        }
+    },
+    "$schema":"http://json-schema.org/draft-07/schema#",
+    "properties":{
+      "version":{
+        "type":"integer",
+        "title":"The schema version this file relates to",
+        "default":2,
+        "examples":[
+          2
+        ]
+      },
+      "controller":{
+        "type":"object",
+        "properties": {
+            "id": {
+                "description": "Configuration id, string or regexp",
+                "type": "string"
+            },
+            "options": {
+                "description": "",
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "description": "Controller title",
+                        "type": "string"
+                    },
+                    "shutdown": {
+                        "description": "List of shutdown options",
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "shutdown_on_shutdown_requested",
+                                "shutdown_on_worker_exit",
+                                "shutdown_on_worker_exit_with_error",
+                                "shutdown_on_last_worker_exit"
+                            ]
+                        }
+                    }
+                }
+            },
+            "manhole": {
+                "description": "",
+                "type": "object",
+                "properties": {
+                    "endpoint": { "$ref": "#/definitions/tls_endpoint" },
+                    "users": { "$ref": "#/definitions/user_list" }
+                },
+                "required": [
+                    "endpoint", "users"
+                ]
+            },
+            "connections": {
+
+            }
+        }
+      },
+      "workers":{
+        "type":"array",
+        "items":{
+          "type":"object",
+          "properties":{
+            "type":{
+              "enum": ["router", "guest", "container"],
+              "title": "The type of this worker",
+              "default":"",
+              "examples":[
+                "router"
+              ]
+            },
+            "realms":{
+              "type":"array",
+              "items":{
+                "type":"object",
+                "properties":{
+                  "name":{
+                    "type":"string",
+                    "title":"The Name Schema ",
+                    "default":"",
+                    "examples":[
+                      "realm1"
+                    ]
+                  },
+                  "roles":{
+                    "type":"array",
+                    "items":{
+                      "type":"object",
+                      "properties":{
+                        "name":{
+                          "type":"string",
+                          "title":"The Name Schema ",
+                          "default":"",
+                          "examples":[
+                            "anonymous"
+                          ]
+                        },
+                        "permissions":{
+                          "type":"array",
+                          "items":{
+                            "type":"object",
+                            "properties":{
+                              "uri":{
+                                "type":"string",
+                                "title":"The Uri Schema ",
+                                "default":"",
+                                "examples":[
+                                  ""
+                                ]
+                              },
+                              "match":{
+                                "type":"string",
+                                "title":"The Match Schema ",
+                                "default":"",
+                                "examples":[
+                                  "prefix"
+                                ]
+                              },
+                              "allow":{
+                                "type":"object",
+                                "properties":{
+                                  "call":{
+                                    "type":"boolean",
+                                    "title":"The Call Schema ",
+                                    "default":false,
+                                    "examples":[
+                                      true
+                                    ]
+                                  },
+                                  "register":{
+                                    "type":"boolean",
+                                    "title":"The Register Schema ",
+                                    "default":false,
+                                    "examples":[
+                                      true
+                                    ]
+                                  },
+                                  "publish":{
+                                    "type":"boolean",
+                                    "title":"The Publish Schema ",
+                                    "default":false,
+                                    "examples":[
+                                      true
+                                    ]
+                                  },
+                                  "subscribe":{
+                                    "type":"boolean",
+                                    "title":"The Subscribe Schema ",
+                                    "default":false,
+                                    "examples":[
+                                      true
+                                    ]
+                                  }
+                                }
+                              },
+                              "disclose":{
+                                "type":"object",
+                                "properties":{
+                                  "caller":{
+                                    "type":"boolean",
+                                    "title":"The Caller Schema ",
+                                    "default":false,
+                                    "examples":[
+                                      true
+                                    ]
+                                  },
+                                  "publisher":{
+                                    "type":"boolean",
+                                    "title":"The Publisher Schema ",
+                                    "default":false,
+                                    "examples":[
+                                      true
+                                    ]
+                                  }
+                                }
+                              },
+                              "cache":{
+                                "type":"boolean",
+                                "title":"The Cache Schema ",
+                                "default":false,
+                                "examples":[
+                                  true
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "transports":{
+              "type":"array",
+              "items":{
+                "type":"object",
+                "properties":{
+                  "type":{
+                    "type":"string",
+                    "title":"The Type Schema ",
+                    "default":"",
+                    "examples":[
+                      "universal"
+                    ]
+                  },
+                  "endpoint":{
+                    "type":"object",
+                    "properties":{
+                      "type":{
+                        "type":"string",
+                        "title":"The Type Schema ",
+                        "default":"",
+                        "examples":[
+                          "tcp"
+                        ]
+                      },
+                      "port":{
+                        "type":"integer",
+                        "title":"The Port Schema ",
+                        "default":0,
+                        "examples":[
+                          8080
+                        ]
+                      }
+                    }
+                  },
+                  "rawsocket":{
+                    "type":"object"
+                  },
+                  "websocket":{
+                    "type":"object",
+                    "properties":{
+                      "ws":{
+                        "type":"object",
+                        "properties":{
+                          "type":{
+                            "type":"string",
+                            "title":"The Type Schema ",
+                            "default":"",
+                            "examples":[
+                              "websocket"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "web":{
+                    "type":"object",
+                    "properties":{
+                      "paths":{
+                        "type":"object",
+                        "properties":{
+                          "/":{
+                            "type":"object",
+                            "properties":{
+                              "type":{
+                                "type":"string",
+                                "title":"The Type Schema ",
+                                "default":"",
+                                "examples":[
+                                  "static"
+                                ]
+                              },
+                              "directory":{
+                                "type":"string",
+                                "title":"The Directory Schema ",
+                                "default":"",
+                                "examples":[
+                                  "../web"
+                                ]
+                              },
+                              "options":{
+                                "type":"object",
+                                "properties":{
+                                  "enable_directory_listing":{
+                                    "type":"boolean",
+                                    "title":"The Enable_directory_listing Schema ",
+                                    "default":false,
+                                    "examples":[
+                                      true
+                                    ]
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "info":{
+                            "type":"object",
+                            "properties":{
+                              "type":{
+                                "type":"string",
+                                "title":"The Type Schema ",
+                                "default":"",
+                                "examples":[
+                                  "nodeinfo"
+                                ]
+                              }
+                            }
+                          },
+                          "api":{
+                            "type":"object",
+                            "properties":{
+                              "type":{
+                                "type":"string",
+                                "title":"The Type Schema ",
+                                "default":"",
+                                "examples":[
+                                  "flasky"
+                                ]
+                              },
+                              "uri":{
+                                "type":"string",
+                                "title":"The Uri Schema ",
+                                "default":"",
+                                "examples":[
+                                  "com.myapp.api"
+                                ]
+                              },
+                              "role":{
+                                "type":"string",
+                                "title":"The Role Schema ",
+                                "default":"",
+                                "examples":[
+                                  "anonymous"
+                                ]
+                              },
+                              "realm":{
+                                "type":"string",
+                                "title":"The Realm Schema ",
+                                "default":"",
+                                "examples":[
+                                  "realm1"
+                                ]
+                              },
+                              "templates":{
+                                "type":"array",
+                                "items":{
+                                  "type":"string",
+                                  "title":"The 0th Schema ",
+                                  "default":"",
+                                  "examples":[
+                                    "../templates"
+                                  ]
+                                }
+                              },
+                              "sandbox":{
+                                "type":"boolean",
+                                "title":"The Sandbox Schema ",
+                                "default":false,
+                                "examples":[
+                                  true
+                                ]
+                              },
+                              "routes":{
+                                "type":"array",
+                                "items":{
+                                  "type":"object",
+                                  "properties":{
+                                    "path":{
+                                      "type":"string",
+                                      "title":"The Path Schema ",
+                                      "default":"",
+                                      "examples":[
+                                        "/product/<int:product_id>/report/<report>?<int:year>&<int:month>"
+                                      ]
+                                    },
+                                    "method":{
+                                      "type":"string",
+                                      "title":"The Method Schema ",
+                                      "default":"",
+                                      "examples":[
+                                        "GET"
+                                      ]
+                                    },
+                                    "call":{
+                                      "type":"string",
+                                      "title":"The Call Schema ",
+                                      "default":"",
+                                      "examples":[
+                                        "com.myapp.api"
+                                      ]
+                                    },
+                                    "render":{
+                                      "type":"string",
+                                      "title":"The Render Schema ",
+                                      "default":"",
+                                      "examples":[
+                                        "product_report.j2"
+                                      ]
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }

@@ -141,6 +141,12 @@
       "url": "http://json.schemastore.org/config"
     },
     {
+      "name": "config.json",
+      "description": "Crossbar.IO router config file",
+      "fileMatch": [ "config.json" ],
+      "url": "http://json.schemastore.org/crossbar"
+    },
+    {
       "name": "contribute.json",
       "description": "A JSON schema for open-source project contribution data by Mozilla",
       "fileMatch": [ "contribute.json" ],
