@@ -1,6 +1,61 @@
 {
+    "$schema": "file:///home/gareth/Devel/Crossbar/schemastore/src/schemas/json/crossbar.json",
     "version": 2,
-    "controller": {},
+    "controller": { 
+        "id": "",
+        "fabric":{},
+        "connections": [
+            {
+                "user": "",
+                "type": "postgres",
+                "port": 0,
+                "password": "",
+                "options": {
+                    
+                },
+                "id": "",
+                "host": "",
+                "database": ""
+            }
+        ],
+        "manhole": {
+            "endpoint": {
+                "version": 4,
+                "type": "tcp",
+                "tls": {
+                    "key": "",
+                    "dhparam": "",
+                    "ciphers": "",
+                    "chain_certificates": [
+                        
+                    ],
+                    "certificate": "",
+                    "ca_certificates": [
+                        
+                    ]
+                },
+                "shared": true,
+                "port": 0,
+                "interface": "",
+                "backlog": 50
+            },
+            "users": [
+                {
+                    "user": "",
+                    "password": ""
+                }
+            ]
+        },
+        "options": {
+            "shutdown": [
+                "shutdown_on_last_worker_exit",
+                "shutdown_on_shutdown_requested",
+                "shutdown_on_worker_exit",
+                "shutdown_on_last_worker_exit"
+            ],
+            "title": ""
+        }
+    },
     "workers": [
         {
             "type": "router",
